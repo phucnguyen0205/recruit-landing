@@ -1,0 +1,27 @@
+# Node dependencies (Frontend)
+node_modules/
+.pnpm-store/
+
+# Environment variables (Chứa thông tin bảo mật, tuyệt đối không commit)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Go build outputs (Backend)
+backend/server
+backend/*.exe
+
+# IDEs and editors config
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating System rác
+.DS_Store
+Thumbs.db
