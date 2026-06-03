@@ -37,7 +37,11 @@ func main() {
 	}
 	log.Println("✅ Connected to PostgreSQL")
 
+	// 1. Tự động tạo bảng
 	createTables()
+
+	// 2. Tự động chèn dữ liệu mẫu (Mới bổ sung)
+	seedData()
 
 	http.HandleFunc("/api/jobs", corsMiddleware(getJobsHandler))
 	http.HandleFunc("/api/health", corsMiddleware(healthHandler))
@@ -69,17 +73,44 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func createTables() {
 	query := `
-	CREATE TABLE IF NOT EXISTS jobs (
-		id SERIAL PRIMARY KEY,
-		title VARCHAR(255) NOT NULL,
-		description TEXT,
-		location VARCHAR(255),
-		created_at TIMESTAMP DEFAULT NOW()
-	);`
+    CREATE TABLE IF NOT EXISTS jobs (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        location VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
+    );`
 	if _, err := db.Exec(query); err != nil {
 		log.Fatal("Cannot create table:", err)
 	}
 	log.Println("✅ Bảng 'jobs' đã sẵn sàng")
+}
+
+// Hàm mới: Tự động nạp dữ liệu nếu database trống
+func seedData() {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM jobs").Scan(&count)
+	if err != nil {
+		log.Println("❌ Lỗi kiểm tra số lượng bản ghi:", err)
+		return
+	}
+
+	// Nếu chưa có bản ghi nào, tiến hành chèn dữ liệu mẫu
+	if count == 0 {
+		query := `
+        INSERT INTO jobs (title, description, location) VALUES
+        ('Frontend Developer', 'Thành thạo ReactJS, có kinh nghiệm với TypeScript', 'Hồ Chí Minh'),
+        ('Backend Developer', 'Kinh nghiệm Golang, PostgreSQL, Docker', 'Hà Nội'),
+        ('DevOps Engineer', 'Quản lý CI/CD, AWS, Kubernetes', 'Đà Nẵng');`
+
+		if _, err := db.Exec(query); err != nil {
+			log.Println("❌ Lỗi khi chèn dữ liệu mẫu:", err)
+			return
+		}
+		log.Println("✅ Đã tự động chèn 3 dữ liệu mẫu vào database thành công!")
+	} else {
+		log.Println("ℹ️ Database đã có sẵn dữ liệu, bỏ qua bước chèn mẫu.")
+	}
 }
 
 func getJobsHandler(w http.ResponseWriter, r *http.Request) {
